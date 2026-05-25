@@ -20,10 +20,11 @@ format:
 
 | Bloque | Tema | Min |
 |--------|------|-----|
-| 1 | La ENAHO por dentro | 15 |
-| 2 | De correlación a causalidad | 15 |
+| 1 | La ENAHO por dentro | 12 |
+| 1.5 | Manos a la ENAHO (demo en vivo) | 8 |
+| 2 | De correlación a causalidad | 12 |
 | 3 | Caso: agentes bancarios y remesas | 10 |
-| 4 | ENAHO + datos administrativos | 10 |
+| 4 | ENAHO + datos administrativos | 8 |
 | 5 | Menú de temas de tesis | 5 |
 | 6 | Cierre práctico | 5 |
 
@@ -165,6 +166,21 @@ Se organizan en **módulos** (100, 200, 300...) = los archivos que descargan.
 
 ---
 
+## Pobreza en el tiempo
+
+| Año | Tasa | Contexto |
+|-----|------|----------|
+| 2019 | 20.2% | Pre-pandemia |
+| 2020 | 30.1% | COVID-19 |
+| 2021 | 25.9% | Recuperación |
+| 2022 | 27.5% | Crisis política + inflación |
+| 2023 | 29.0% | Ciclón Yaku + recesión |
+| 2024 | 27.6% | Recuperación parcial |
+
+10 años de progreso se perdieron en un año (2020). La pobreza aún no vuelve al nivel pre-pandemia.
+
+---
+
 ## Disparidades departamentales (2024)
 
 :::: {.columns}
@@ -268,6 +284,8 @@ print(f"Tasa de pobreza 2024: {tasa:.1f}%")
 print(f"(Cifra oficial INEI: 27.6%)")
 ```
 
+→ Output: **Tasa de pobreza 2024: 27.8%** (cifra oficial: 27.6%)
+
 ---
 
 ## Perfil del pobre {.smaller}
@@ -282,15 +300,13 @@ for area, nombre in [(0, "Urbano"), (1, "Rural")]:
     t = np.average(sub["pobre"], weights=sub["factor_pob"]) * 100
     print(f"{nombre}: {t:.1f}%")
 
-print()
-for s in [1, 2, 3, 4]:
-    sub = df[df["mieperho"] == s]
+for s in [1, 2, 3, 4, "5+"]:
+    sub = df[df["mieperho"] == s] if isinstance(s, int) else df[df["mieperho"] >= 5]
     t = np.average(sub["pobre"], weights=sub["factor_pob"]) * 100
     print(f"{s} miembros: {t:.1f}%")
-sub = df[df["mieperho"] >= 5]
-t = np.average(sub["pobre"], weights=sub["factor_pob"]) * 100
-print(f"5+ miembros: {t:.1f}%")
 ```
+
+→ Urbano: 25.0% | Rural: 39.4% | 1 miembro: 7.2% → 5+: 40.9%
 
 ---
 
@@ -337,6 +353,8 @@ p10, p50, p90 = [stats.quantile(q).iloc[0] for q in [0.1, 0.5, 0.9]]
 print(f"P10: S/{p10:.0f}  |  P50: S/{p50:.0f}  |  P90: S/{p90:.0f}")
 print(f"Ratio P90/P10: {p90/p10:.1f}x")
 ```
+
+→ Gini: 0.348 | P10: S/288 | P50: S/641 | P90: S/1,426 | Ratio: 4.9x
 
 ---
 
@@ -770,6 +788,19 @@ Todos usan **datos públicos** y son viables como tesis de pregrado.
 
 ---
 
+## Ideas para perfiles de ingeniería {.smaller}
+
+| Tema | Método | Datos |
+|---|---|---|
+| Cobertura de telecomunicaciones → productividad rural | DiD | OSIPTEL + ENAHO 500 |
+| Infraestructura vial (km pavimentados) → empleo | DiD/IV | MTC + ENAHO 500 |
+| Contaminación minera → salud en cuencas | RDD/DiD | OEFA + ENAHO 400 |
+| Acceso a energía eléctrica → trabajo femenino | DiD | MEM + ENAHO 100/500 |
+
+La ENAHO mide outcomes; los datos de ingeniería/infraestructura dan el tratamiento.
+
+---
+
 ## ¿Cómo elegir tema?
 
 1. **¿Te interesa?** — Vas a vivir con él meses.
@@ -815,8 +846,10 @@ from statsmodels.stats.weightstats import DescrStatsW
 
 # Media ponderada del gasto per cápita
 sumaria = pd.read_stata("sumaria-2024.dta")
-stats = DescrStatsW(sumaria["gpcm"], weights=sumaria["factor07"])
-print(f"Gasto promedio: S/ {stats.mean:.1f}")
+sumaria["gasto_pc"] = sumaria["gashog2d"] / (sumaria["mieperho"] * 12)
+factor_pob = sumaria["factor07"] * sumaria["mieperho"]
+stats = DescrStatsW(sumaria["gasto_pc"], weights=factor_pob)
+print(f"Gasto per cápita promedio: S/ {stats.mean:.1f}")
 print(f"IC 95%: [{stats.tconfint_mean()[0]:.1f}, {stats.tconfint_mean()[1]:.1f}]")
 ```
 
@@ -855,6 +888,8 @@ Para DiD robusto: **R** (`did`) y **Stata** (`csdid`) están más maduros que Py
 [**Gracias**]{style="font-size: 1.8em;"}
 
 Slides y código: [github.com/josemendozas/charla-enaho-pobreza-uni](https://github.com/josemendozas/charla-enaho-pobreza-uni)
+
+jose.mendozas@pucp.edu.pe
 
 [¿Preguntas?]{style="font-size: 1.3em;"}
 :::
