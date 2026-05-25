@@ -2,7 +2,6 @@
 title: "Pobreza Monetaria y la ENAHO"
 subtitle: "Herramientas para pensar temas de tesis con datos de hogares"
 author: "José Mendoza"
-date: "2026-05-25"
 format:
   revealjs:
     theme: simple
