@@ -854,7 +854,7 @@ Para DiD robusto: **R** (`did`) y **Stata** (`csdid`) están más maduros que Py
 
 [**Gracias**]{style="font-size: 1.8em;"}
 
-Slides y código: [github.com/joseantonioLVL/charla-enaho-pobreza-uni](https://github.com/joseantonioLVL/charla-enaho-pobreza-uni)
+Slides y código: [github.com/josemendozas/charla-enaho-pobreza-uni](https://github.com/josemendozas/charla-enaho-pobreza-uni)
 
 [¿Preguntas?]{style="font-size: 1.3em;"}
 :::
