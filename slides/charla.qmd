@@ -1,0 +1,1169 @@
+---
+title: "Pobreza Monetaria y la ENAHO"
+subtitle: "Herramientas para pensar temas de tesis con datos de hogares"
+author: "José Mendoza"
+date: "2026"
+format:
+  revealjs:
+    theme: simple
+    slide-number: true
+    transition: fade
+    width: 1280
+    height: 720
+    footer: "Charla UNI — Pobreza Monetaria y ENAHO"
+    lang: es
+    highlight-style: github
+    code-line-numbers: false
+    incremental: false
+---
+
+# Agenda {.smaller}
+
+| Bloque | Tema | Min |
+|--------|------|-----|
+| 1 | La ENAHO por dentro | 15 |
+| 2 | De correlación a causalidad | 15 |
+| 3 | Caso: agentes bancarios y remesas | 10 |
+| 4 | ENAHO + datos administrativos | 10 |
+| 5 | Menú de temas de tesis | 5 |
+| 6 | Cierre práctico | 5 |
+
+---
+
+# {background-color="#2c3e50"}
+
+::: {style="color: white; font-size: 2em; text-align: center;"}
+**Bloque 1**
+
+La ENAHO por dentro
+:::
+
+---
+
+## ¿Qué es la ENAHO?
+
+- **Encuesta Nacional de Hogares** (INEI), continua desde 2003
+- Principal fuente de datos para medir pobreza, empleo y condiciones de vida en Perú
+- Se ejecuta **todo el año** (enero a diciembre), no es una foto puntual
+- Cobertura: **24 departamentos + Provincia Constitucional del Callao**, área urbana y rural
+- Desde 2007: supervisada por un **Comité Asesor de Pobreza** (con Banco Mundial) que garantiza calidad metodológica
+
+---
+
+## Diseño muestral {.smaller}
+
+:::: {.columns}
+
+::: {.column width="50%"}
+**Tipo de muestra:**
+
+- Probabilística
+- De áreas
+- **Estratificada** (urbano/rural por departamento)
+- **Bietápica**
+- Independiente en cada departamento
+:::
+
+::: {.column width="50%"}
+**Unidades de muestreo:**
+
+| | Urbano | Rural |
+|---|---|---|
+| **UPM** | Conglomerado (~140 viv.) | Centro poblado o AER (~140 viv.) |
+| **USM** | Vivienda | Conglomerado (~100 viv.) o vivienda |
+| **UTM** | — | Vivienda |
+:::
+
+::::
+
+. . .
+
+**Muestra 2024:** 5,359 conglomerados → **36,594 viviendas** (24,242 urbanas + 12,352 rurales)
+
+Nivel de confianza: 95%
+
+---
+
+## El panel rotativo
+
+:::: {.columns}
+
+::: {.column width="60%"}
+- Desde 2008: **muestra panel** donde viviendas se revisitan
+- Rotación: **1/5 de la muestra** se renueva cada año
+- Vida útil de cada sub-panel: **5 años**
+- 2024: 11,840 viviendas panel + 24,780 viviendas no panel
+
+**¿Para qué sirve?**
+
+- Seguimiento longitudinal de hogares
+- Medir **transiciones** de pobreza (entrada/salida)
+- Estimar **movilidad económica**
+:::
+
+::: {.column width="40%"}
+
+```{python}
+#| echo: false
+#| eval: false
+# Esquema conceptual del panel rotativo
+# Año 1: [A B C D E]
+# Año 2: [B C D E F]  ← sale A, entra F
+# Año 3: [C D E F G]  ← sale B, entra G
+# ...cada sub-panel vive 5 años
+```
+
+| Año | Sub-paneles activos |
+|-----|-------------------|
+| 2020 | A B C D E |
+| 2021 | B C D E **F** |
+| 2022 | C D E F **G** |
+| 2023 | D E F G **H** |
+| 2024 | E F G H **I** |
+
+:::
+::::
+
+---
+
+## Niveles de inferencia
+
+No todo se puede desagregar a cualquier nivel:
+
+:::: {.columns}
+
+::: {.column width="50%"}
+**Muestra integrada (anual):**
+
+- Nacional
+- Urbano / Rural nacional
+- 24 departamentos
+- Costa, Sierra, Selva (urbano/rural)
+- Lima Metropolitana y Callao
+:::
+
+::: {.column width="50%"}
+**Muestra integrada (trimestral):**
+
+- Nacional
+- Urbano / Rural nacional
+
+**Muestra panel (anual):**
+
+- Nacional, Urbano, Rural
+- Costa, Sierra, Selva
+:::
+
+::::
+
+. . .
+
+**Implicancia para tesis:** No puedes hacer inferencia a nivel provincial o distrital directamente con ENAHO — necesitas agregar o usar métodos de áreas pequeñas.
+
+---
+
+## Los cuestionarios {.smaller}
+
+La ENAHO 2024 tiene **404 preguntas + 329 ítems de gasto**, distribuidos en:
+
+| Cuestionario | Preguntas | Contenido principal |
+|---|---|---|
+| **ENAHO.01** | 160 | Vivienda, hogar, miembros, educación |
+| **ENAHO.01-A** | 154 | Salud, empleo e ingresos (14+ años) |
+| **ENAHO.01-B** | 43 | Gobernabilidad y democracia (18+ años) |
+| **ENAHO.02** | 25 | Percepción del hogar |
+| **ENAHO.04** | 22 | Actividad agropecuaria |
+| **Gastos 601** | 203 ítems | Alimentos (últimos 15 días) |
+| **Gastos 602-612** | 126 ítems | Bienes y servicios no alimentarios |
+
+. . .
+
+Internamente se organizan en **módulos** (100, 200, 300, 400, 500, 601-612, 700...) que son las tablas/archivos que descargan del INEI.
+
+---
+
+## Módulos clave para investigación {.smaller}
+
+| Módulo | Contenido | Preguntas | Unidad | Úsalo para... |
+|---|---|---|---|---|
+| **100** | Vivienda y hogar | 33 | Hogar | Acceso a servicios, vivienda, NBI |
+| **200** | Miembros del hogar | 21 | Persona | Demografía, migración, trabajo infantil |
+| **300** | Educación | 42 | Persona 3+ | Capital humano, brecha educativa, TIC |
+| **400** | Salud | 29 | Persona | Acceso a salud, seguro, morbilidad |
+| **500** | Empleo e ingreso | 58 | Persona 14+ | Mercado laboral, informalidad, ingresos |
+| **601-612** | Gastos | 329 ítems | Hogar | Consumo, canasta, pobreza |
+| **700** | Gobernabilidad | 43 | Persona 18+ | Confianza, corrupción, participación |
+| **Sumaria** | Variables calculadas | — | Hogar | **Gasto agregado, línea de pobreza, clasificación pobre/no pobre** |
+
+. . .
+
+**Tip:** La Sumaria es la tabla que más usan... pero la menos que entienden. Ahí INEI ya hizo la agregación del gasto. Si la usas sin entender cómo se construyó, puedes cometer errores graves.
+
+---
+
+## ¿Cómo se mide la pobreza monetaria?
+
+:::: {.columns}
+
+::: {.column width="55%"}
+**Enfoque del gasto** (no del ingreso):
+
+1. INEI suma el **gasto per cápita mensual** del hogar (alimentos + no alimentos + autoconsumo + donaciones)
+2. Lo compara con la **línea de pobreza**:
+   - **Pobreza:** gasto < S/ 454/mes por persona (2024)
+   - **Pobreza extrema:** gasto < S/ 256/mes por persona
+
+Una familia de 4 necesita al menos **S/ 1,816/mes** para no ser pobre.
+:::
+
+::: {.column width="45%"}
+**Cifras 2024:**
+
+| | Tasa | Personas |
+|---|---|---|
+| Pobreza | **27.6%** | 9.4 millones |
+| Pobreza extrema | **5.5%** | 1.9 millones |
+
+| | 2023 | 2024 |
+|---|---|---|
+| Urbano | 26.4% | **24.8%** |
+| Rural | 39.8% | **39.3%** |
+
+:::
+::::
+
+---
+
+## Disparidades departamentales (2024)
+
+:::: {.columns}
+
+::: {.column width="50%"}
+**Mayor pobreza:**
+
+- Cajamarca: **45.0%**
+- Loreto: **43.0%**
+
+:::
+
+::: {.column width="50%"}
+**Menor pobreza:**
+
+- Ica: **6.0%**
+- Moquegua: **11.0%**
+- Madre de Dios: **11.1%**
+:::
+::::
+
+. . .
+
+La brecha es de **39 puntos porcentuales** entre Cajamarca e Ica.
+
+¿Qué explica estas diferencias? Esa es exactamente la pregunta de investigación que una tesis puede abordar.
+
+---
+
+## Trampas comunes al usar ENAHO {.smaller}
+
+::: {.callout-warning}
+## 1. Ignorar los factores de expansión
+Cada observación representa a un número diferente de personas. Sin `factor07` (o el factor correspondiente), tus estadísticas descriptivas están sesgadas.
+:::
+
+::: {.callout-warning}
+## 2. No usar deflactores espaciales
+S/ 454 en Lima ≠ S/ 454 en Huancavelica. INEI ajusta por diferencias de precios entre dominios geográficos. La variable ya viene deflactada en Sumaria, pero si construyes tu propio agregado, debes deflactar.
+:::
+
+::: {.callout-warning}
+## 3. Confundir años y metodologías
+La metodología de pobreza cambió en 2010 (nueva canasta, nuevos deflactores). Las series 2004-2009 y 2010-2024 **no son directamente comparables** sin empalme.
+:::
+
+::: {.callout-warning}
+## 4. Hacer inferencia distrital
+ENAHO no tiene representatividad a nivel de distrito. Si agrupas por distrito, tendrás celdas con 2-3 observaciones y errores estándar enormes.
+:::
+
+---
+
+## Trampas comunes (cont.) {.smaller}
+
+::: {.callout-warning}
+## 5. No distinguir entre gasto e ingreso
+INEI mide pobreza por **gasto**, no por ingreso. El ingreso es más volátil y tiene mayor subdeclaración. Si tu tesis usa ingreso como proxy de bienestar, justifícalo.
+:::
+
+::: {.callout-warning}
+## 6. Usar la ENAHO como si fuera un censo
+La ENAHO tiene ~36,000 viviendas. Si filtras mucho (ej. mujeres rurales quechuahablantes de 18-25 años en Apurímac), te quedas con muy pocas observaciones y pierdes poder estadístico.
+:::
+
+::: {.callout-warning}
+## 7. Ignorar el diseño muestral en la estimación
+ENAHO usa muestreo complejo (conglomerados + estratos). Si no declaras `svyset` (Stata) o el equivalente en Python, tus errores estándar están subestimados.
+:::
+
+. . .
+
+En Python: usar `linearmodels` o configurar clusters manualmente. En la sección de código les mostraré cómo.
+
+---
+
+## ¿Qué hay más allá de pobreza monetaria? {.smaller}
+
+La ENAHO permite estudiar mucho más que solo "% de pobres":
+
+:::: {.columns}
+
+::: {.column width="50%"}
+**Temas clásicos:**
+
+- Desigualdad (Gini, percentiles de gasto)
+- Retornos a la educación
+- Brechas salariales de género
+- Informalidad laboral
+- Acceso a servicios básicos
+:::
+
+::: {.column width="50%"}
+**Temas menos explorados (oportunidad de tesis):**
+
+- Discriminación (módulo nuevo)
+- Acceso a justicia
+- Inclusión financiera
+- Trabajo infantil
+- Programas sociales (Juntos, Pensión 65, Qali Warma)
+- Gobernabilidad y corrupción percibida
+- Migración interna
+:::
+::::
+
+. . .
+
+**Consejo:** Los módulos de gobernabilidad, discriminación y acceso a justicia están sub-explotados. Hay espacio para contribuciones originales.
+
+---
+
+## Resumen del Bloque 1
+
+:::: {.columns}
+
+::: {.column width="50%"}
+**Lo que deben recordar:**
+
+1. ENAHO = encuesta continua, ~36,600 viviendas/año
+2. Panel rotativo (1/5 por año, 5 años de vida)
+3. Pobreza = gasto vs. línea de pobreza
+4. Siempre usar factores de expansión
+5. No tiene representatividad distrital
+6. Declarar el diseño muestral complejo
+:::
+
+::: {.column width="50%"}
+**Para su tesis:**
+
+- Exploren los módulos menos usados
+- Combinen años para ganar muestra
+- La Sumaria es útil pero entiendan qué hay dentro
+- La pobreza monetaria no es el único outcome interesante
+:::
+::::
+
+---
+
+# {background-color="#2c3e50"}
+
+::: {style="color: white; font-size: 2em; text-align: center;"}
+**Bloque 2**
+
+De correlación a causalidad
+:::
+
+---
+
+## El problema central
+
+Quieres estudiar si X afecta la pobreza. Corres una regresión:
+
+$$\text{Pobreza}_i = \alpha + \beta \cdot X_i + \varepsilon_i$$
+
+. . .
+
+**¿$\beta$ es causal?** Casi seguro que no.
+
+- **Variables omitidas:** lo que no observas está correlacionado con X y con pobreza
+- **Causalidad reversa:** ¿X causa menos pobreza, o menos pobreza causa más X?
+- **Selección:** los hogares que tienen X son diferentes de los que no
+
+. . .
+
+Una tesis que solo reporta correlaciones no aporta nada nuevo. **Necesitas una estrategia de identificación.**
+
+---
+
+## ¿Qué es una estrategia de identificación?
+
+Un argumento (creíble) de por qué tu estimación captura un **efecto causal** y no una correlación espuria.
+
+. . .
+
+Las principales estrategias con datos observacionales:
+
+| Método | Idea central | Necesitas... |
+|---|---|---|
+| **Diff-in-Diff** | Comparar antes/después entre tratados y no tratados | Un evento/política con fecha de inicio clara |
+| **RDD** | Explotar un umbral arbitrario de asignación | Una regla que asigne tratamiento según un puntaje |
+| **Variables instrumentales** | Encontrar algo que afecte X pero no Y directamente | Un instrumento exógeno (y defender la exclusión) |
+| **Panel + FE** | Controlar por todo lo que no cambia en el tiempo | Datos longitudinales del mismo individuo/hogar |
+
+---
+
+## Diff-in-Diff: la herramienta estrella {.smaller}
+
+:::: {.columns}
+
+::: {.column width="55%"}
+**Idea:** Si una política se implementa en ciertos lugares/momentos, comparo:
+
+- **Tratados vs. control**
+- **Antes vs. después**
+
+$$Y_{it} = \alpha + \beta_1 \cdot Post_t + \beta_2 \cdot Tratado_i + \delta \cdot (Post_t \times Tratado_i) + \varepsilon_{it}$$
+
+$\delta$ = efecto causal (si parallel trends se cumple)
+:::
+
+::: {.column width="45%"}
+**Ejemplos con ENAHO:**
+
+- Expansión de **Juntos** a nuevos distritos → pobreza
+- Cambio en **salario mínimo** → empleo informal
+- Llegada de **agentes bancarios** → remesas (nuestro caso de estudio)
+- **El Niño costero 2017** → gasto de hogares afectados
+:::
+::::
+
+. . .
+
+**Supuesto clave:** En ausencia del tratamiento, tratados y controles habrían seguido la misma tendencia (*parallel trends*). Se testea con pre-trends.
+
+---
+
+## DiD con adopción escalonada {.smaller}
+
+Muchas políticas no se implementan de golpe — llegan a diferentes lugares en diferentes momentos.
+
+:::: {.columns}
+
+::: {.column width="50%"}
+**El problema del TWFE clásico:**
+
+Con tratamiento escalonado, el estimador de dos vías (TWFE) puede:
+
+- Usar **"comparaciones prohibidas"** (tratados tempranos como control de tardíos)
+- Asignar **pesos negativos** a ciertos grupos
+- Producir estimaciones **sesgadas o de signo contrario**
+
+(Goodman-Bacon, 2021)
+:::
+
+::: {.column width="50%"}
+**Soluciones modernas:**
+
+- **Callaway & Sant'Anna (2021):** estima ATT por cohorte-tiempo, agrega con pesos no negativos
+- **de Chaisemartin & D'Haultfœuille (2020):** enfoque alternativo, test de placebos conjunto
+- **Sun & Abraham (2021):** interaction-weighted estimator
+
+Estos métodos son el nuevo estándar. Si tu tesis usa DiD escalonado con TWFE simple, un evaluador lo va a cuestionar.
+:::
+::::
+
+---
+
+## RDD: explotar umbrales {.smaller}
+
+:::: {.columns}
+
+::: {.column width="55%"}
+**Idea:** Si un programa asigna beneficios según un puntaje con un umbral, los hogares justo arriba y justo abajo del umbral son **casi idénticos** excepto por el tratamiento.
+
+$$Y_i = \alpha + \beta \cdot T_i + f(X_i - c) + \varepsilon_i$$
+
+donde $T_i = \mathbb{1}[X_i \geq c]$
+:::
+
+::: {.column width="45%"}
+**Ejemplos en Perú:**
+
+- **SISFOH:** puntaje de focalización para programas sociales (Juntos, Pensión 65)
+- **Clasificación de distritos** por nivel de pobreza (quintiles del mapa de pobreza INEI)
+- **Transferencias fiscales** (FONCOMUN) que dependen de población con cortes discretos
+:::
+::::
+
+. . .
+
+**Ventaja:** Identificación muy creíble si el puntaje no es manipulable.
+
+**Limitación:** Efecto local (solo válido cerca del umbral). Con ENAHO necesitas muchas observaciones cerca del corte.
+
+---
+
+## Variables instrumentales {.smaller}
+
+:::: {.columns}
+
+::: {.column width="55%"}
+**Idea:** Encuentras una variable Z que:
+
+1. Está correlacionada con X (relevancia)
+2. Solo afecta Y a través de X (exclusión)
+
+$$X_i = \pi_0 + \pi_1 Z_i + v_i \quad \text{(primera etapa)}$$
+$$Y_i = \alpha + \beta X_i + \varepsilon_i \quad \text{(segunda etapa)}$$
+
+:::
+
+::: {.column width="45%"}
+**Ejemplos con ENAHO + datos externos:**
+
+- **Distancia a banco más cercano** → acceso financiero → pobreza
+- **Shocks climáticos** (lluvia, temperatura) → producción agrícola → ingreso rural
+- **Producción minera histórica** → canon → gasto público → outcomes locales
+- **Altitud/geografía** → acceso a mercados → empleo
+:::
+::::
+
+. . .
+
+**Advertencia:** La restricción de exclusión es **indemostrable**. Debes argumentar convincentemente por qué Z no tiene efecto directo sobre Y. Muchos instrumentos "creativos" no sobreviven escrutinio.
+
+---
+
+## Panel con efectos fijos
+
+:::: {.columns}
+
+::: {.column width="55%"}
+Con el panel rotativo de ENAHO puedes seguir hogares en el tiempo:
+
+$$Y_{it} = \alpha_i + \beta X_{it} + \varepsilon_{it}$$
+
+El efecto fijo $\alpha_i$ absorbe todo lo que **no cambia** en el hogar (ubicación, cultura, habilidad del jefe de hogar...).
+
+$\beta$ captura el efecto de **cambios** en X sobre **cambios** en Y.
+:::
+
+::: {.column width="45%"}
+**Limitaciones:**
+
+- Solo elimina confounders **invariantes en el tiempo**
+- Si algo cambia junto con X, sigue habiendo sesgo
+- Panel ENAHO: máximo 5 años, con atrición
+- No es suficiente por sí solo para causalidad — pero es un buen punto de partida
+:::
+::::
+
+. . .
+
+**Tip para tesis:** Panel + FE funciona bien como *baseline*, y luego combinas con DiD o IV para reforzar la identificación.
+
+---
+
+## ¿Cómo elegir tu estrategia? {.smaller}
+
+```{mermaid}
+%%| fig-width: 10
+flowchart TD
+    A[Tienes una pregunta causal] --> B{¿Hubo una política/shock<br>con fecha de inicio?}
+    B -->|Sí| C{¿Se implementó<br>de golpe o escalonado?}
+    C -->|De golpe| D[DiD clásico]
+    C -->|Escalonado| E[DiD robusto<br>CS / dCDH]
+    B -->|No| F{¿Hay un umbral<br>de asignación?}
+    F -->|Sí| G[RDD]
+    F -->|No| H{¿Tienes un<br>instrumento creíble?}
+    H -->|Sí| I[IV / 2SLS]
+    H -->|No| J[Panel + FE<br>+ argumentar]
+```
+
+. . .
+
+La estrategia no se elige por moda — se elige por el **diseño institucional** que genera la variación exógena.
+
+---
+
+## Resumen del Bloque 2
+
+:::: {.columns}
+
+::: {.column width="50%"}
+**Mensajes clave:**
+
+1. Correlación ≠ causalidad — necesitas una estrategia de identificación
+2. DiD es la más accesible con ENAHO (hay muchas políticas con fechas claras)
+3. Si el tratamiento es escalonado, **no uses TWFE simple**
+4. RDD requiere un umbral y muchas observaciones cerca del corte
+5. IV es poderoso pero la exclusión es difícil de defender
+:::
+
+::: {.column width="50%"}
+**Para su tesis:**
+
+- Empiecen por la **pregunta**, no por el método
+- Busquen la **variación exógena** en el diseño institucional
+- Un DiD bien hecho vale más que un IV con instrumento dudoso
+- En el siguiente bloque veremos un ejemplo concreto de cómo se hace esto
+:::
+::::
+
+---
+
+# {background-color="#2c3e50"}
+
+::: {style="color: white; font-size: 2em; text-align: center;"}
+**Bloque 3**
+
+Caso: agentes bancarios y remesas en el Perú rural
+:::
+
+---
+
+## El contexto {.smaller}
+
+:::: {.columns}
+
+::: {.column width="55%"}
+Entre 2011 y 2019, la red de **agentes bancarios** en Perú pasó de cubrir el 25% al 85% de todos los distritos.
+
+- **Agente bancario:** bodega o tienda autorizada por un banco para ofrecer servicios financieros básicos (depósitos, retiros, pagos)
+- Llegaron a zonas rurales donde **no había ningún banco ni cajero**
+- En el 91% de los distritos de la muestra, el agente fue la **primera y única** infraestructura financiera formal
+
+**Pregunta:** ¿Tener un agente bancario en tu distrito cambia las finanzas del hogar?
+:::
+
+::: {.column width="45%"}
+**¿Por qué remesas?**
+
+- Si el agente es el **único punto de acceso** a servicios financieros, el primer efecto debería verse en la capacidad de **recibir transferencias**
+- Las remesas privadas (de familiares) son un canal directo que no requiere tener cuenta bancaria — solo necesitas un punto físico donde cobrar
+- Baseline: solo 4.6% recibe remesas, solo 24.7% tiene cuenta
+:::
+::::
+
+---
+
+## Los datos: admin + encuesta {.smaller}
+
+Este paper combina **dos fuentes de datos** — exactamente lo que discutimos en el Bloque 2:
+
+:::: {.columns}
+
+::: {.column width="50%"}
+**Dato administrativo (tratamiento):**
+
+- Fuente: **SBS** (Superintendencia de Banca y Seguros)
+- Variable: presencia de agentes bancarios **por distrito y trimestre**
+- Tratamiento = primer trimestre en que un distrito tiene al menos 1 agente
+- Cobertura: 2015Q1 – 2019Q4
+
+*Ventaja:* el regulador registra esto — no depende de autoreporte
+:::
+
+::: {.column width="50%"}
+**Dato de encuesta (outcomes):**
+
+- Fuente: **ENAHO** (microdatos individuales)
+- Variables: ¿recibe remesas privadas? ¿cuánto?
+- Nivel: individuo × trimestre
+- Muestra: adultos 18+ en distritos que reciben su primer agente → ~49,500 obs en 566 distritos
+
+*Merge:* por **ubigeo distrital** (el código que identifica cada distrito)
+:::
+::::
+
+. . .
+
+**Lección:** Un dato te da el *tratamiento* (cuándo llega el agente), el otro te da el *outcome* (qué pasa con el hogar). Ninguno solo bastaría.
+
+---
+
+## La estrategia empírica {.smaller}
+
+:::: {.columns}
+
+::: {.column width="55%"}
+**Diseño:** DiD con adopción escalonada
+
+- 9 cohortes de tratamiento (distritos que reciben su primer agente en distintos trimestres)
+- 20 trimestres de análisis
+- Grupo control: distritos que **aún no recibieron** agente (not-yet-treated)
+
+**Estimador principal:** Callaway & Sant'Anna (2021)
+
+- Doubly robust IPW (Sant'Anna & Zhao, 2020)
+- Controles: género, edad, rural, empleo, tenencia de cuenta
+- Pesos de encuesta aplicados
+
+**Robustez:** de Chaisemartin & D'Haultfœuille (2020) + TWFE para comparación
+:::
+
+::: {.column width="45%"}
+**Validación del diseño:**
+
+1. ¿El timing de llegada es exógeno?
+   - Regresión de timing en covariables pre-tratamiento: R² = 0.043, p = 0.103
+   - Observables explican muy poco de *cuándo* llegan los agentes
+
+2. ¿Cambia la composición de la muestra?
+   - Placebos con género, edad, cuenta como outcomes → todos insignificantes (p > 0.15)
+:::
+::::
+
+---
+
+## Resultados principales {.smaller}
+
+| | Full Sample | | | Sin cuenta bancaria | | |
+|---|---|---|---|---|---|---|
+| | **CS** | **dCDH** | **TWFE** | **CS** | **dCDH** | **TWFE** |
+| **Recibe remesas** | 0.015** | 0.022 | −0.000 | 0.019*** | 0.034** | −0.001 |
+| | (0.007) | (0.013) | (0.004) | (0.006) | (0.017) | (0.004) |
+| **Monto (asinh)** | 0.072** | 0.060 | 0.002 | 0.079*** | 0.115 | −0.003 |
+| | (0.030) | (0.052) | (0.018) | (0.029) | (0.066) | (0.020) |
+
+. . .
+
+**Tres lecciones de esta tabla:**
+
+1. **CS detecta el efecto** (+1.5 pp en probabilidad, +7.2% en monto) — TWFE da exactamente cero
+2. **El efecto se concentra** en personas sin cuenta bancaria (el canal teórico esperado)
+3. La elección de estimador **importa sustancialmente** — no es un tecnicismo
+
+---
+
+## Event study: pre-trends y dinámicas {.smaller}
+
+:::: {.columns}
+
+::: {.column width="50%"}
+**Muestra completa:**
+
+- Pre-tratamiento: coeficientes pequeños e insignificantes → **parallel trends se cumple**
+- Post-tratamiento: efectos emergen alrededor del **tercer trimestre**
+- Test de placebos conjunto (dCDH): p = 0.37
+:::
+
+::: {.column width="50%"}
+**Sin cuenta bancaria:**
+
+- Misma validación de pre-trends
+- Efectos post-tratamiento **más grandes y significativos**
+- Test de placebos: p = 0.46
+- Placebo por permutación (100 iteraciones): significativo en < 15% de los casos
+:::
+::::
+
+. . .
+
+**¿Por qué importa el event study?** Es la evidencia visual de que parallel trends se cumple. Sin esto, el DiD no es creíble. Siempre repórtenlo en su tesis.
+
+---
+
+## ¿Por qué TWFE falla aquí? {.smaller}
+
+:::: {.columns}
+
+::: {.column width="55%"}
+Los ATT por cohorte van de **−0.056 a +0.074** — hay mucha heterogeneidad.
+
+- 3 cohortes son individualmente significativas (todas positivas)
+- TWFE asigna pesos basados en varianza — algunos **negativos**
+- Esto produce **atenuación o reversión de signo**
+
+El CS group-weighted average es significativo a p = 0.009. TWFE: p > 0.90.
+
+**Mismos datos. Misma pregunta. Conclusión opuesta.**
+:::
+
+::: {.column width="45%"}
+**Moraleja para su tesis:**
+
+- Si su tratamiento llega a diferentes lugares en diferentes momentos → **no usen TWFE**
+- Reporten CS o dCDH como estimador principal
+- Pueden reportar TWFE como *benchmark* para mostrar el contraste
+- Esto aplica a cualquier política pública que se expanda gradualmente (Juntos, agua potable, electrificación...)
+:::
+::::
+
+---
+
+## ¿Qué aprendimos de este ejemplo?
+
+:::: {.columns}
+
+::: {.column width="50%"}
+**Sobre research design:**
+
+1. Combinar dato admin (SBS) + encuesta (ENAHO) por ubigeo
+2. El rollout escalonado de una política **es** tu experimento natural
+3. Validar el diseño: exogeneidad del timing + placebos + pre-trends
+4. Usar estimadores modernos (CS, dCDH)
+:::
+
+::: {.column width="50%"}
+**Sobre resultados:**
+
+5. Un efecto de 1.5 pp sobre base de 4.6% = incremento de 33-41% — las magnitudes importan
+6. Los agentes funcionan como **puntos de acceso al efectivo**, no como puerta a la banca formal
+7. El efecto es intent-to-treat (disponibilidad, no uso) → efecto real probablemente mayor
+:::
+::::
+
+. . .
+
+**Para su tesis:** No necesitan datos propios ni experimentos. La combinación inteligente de datos públicos + una estrategia de identificación creíble puede producir un paper publicable.
+
+---
+
+# {background-color="#2c3e50"}
+
+::: {style="color: white; font-size: 2em; text-align: center;"}
+**Bloque 4**
+
+ENAHO + datos administrativos
+:::
+
+---
+
+## La idea: dos fuentes, una pregunta {.smaller}
+
+:::: {.columns}
+
+::: {.column width="50%"}
+**ENAHO te da:**
+
+- Outcomes a nivel de **hogar/persona**: gasto, ingreso, empleo, salud, educación
+- Controles sociodemográficos ricos
+- Representatividad nacional y departamental
+- Serie larga (2003-2025)
+:::
+
+::: {.column width="50%"}
+**Datos administrativos te dan:**
+
+- **Tratamiento o variación exógena** a nivel de distrito/provincia
+- Cobertura universal (todos los distritos, no una muestra)
+- Frecuencia más alta (mensual, trimestral)
+- Sin error de autoreporte
+:::
+::::
+
+. . .
+
+**El merge:** ENAHO tiene ubigeo (departamento + provincia + distrito). Los datos admin también. Se unen por ahí.
+
+$$\text{Outcome}_{i,d,t}^{\text{ENAHO}} = f(\text{Tratamiento}_{d,t}^{\text{Admin}}, \text{Controles}_{i,d,t}^{\text{ENAHO}})$$
+
+---
+
+## Fuentes administrativas clave para Perú {.smaller}
+
+| Fuente | Institución | Qué contiene | Nivel | Acceso |
+|---|---|---|---|---|
+| **SIAF** | MEF | Gasto público municipal (inversión, corriente) | Distrito × mes | Portal de Transparencia |
+| **SBS** | SBS | Oficinas, cajeros, agentes bancarios, créditos, depósitos | Distrito × trimestre | Web SBS |
+| **RENAMU** | INEI | Características municipales (personal, servicios, infraestructura) | Distrito × año | Microdatos INEI |
+| **Censo Escolar** | MINEDU | Matrícula, docentes, infraestructura educativa | IE × año | ESCALE |
+| **RENIPRESS** | MINSA/SUSALUD | Establecimientos de salud, personal, equipamiento | Establecimiento | Web SUSALUD |
+| **SENAMHI** | SENAMHI | Precipitación, temperatura, eventos extremos | Estación × día | SENAMHI datos |
+| **INGEMMET** | INGEMMET | Concesiones mineras, producción | Concesión | Web INGEMMET |
+| **Padrón SISFOH** | MIDIS | Clasificación socioeconómica de hogares | Hogar | Solicitud |
+
+---
+
+## Ejemplo: SIAF + ENAHO {.smaller}
+
+:::: {.columns}
+
+::: {.column width="55%"}
+**¿Qué es el SIAF?**
+
+El Sistema Integrado de Administración Financiera registra **todo el gasto público** de los gobiernos subnacionales.
+
+Puedes saber cuánto gastó cada municipalidad distrital en:
+
+- Inversión en educación, salud, transporte, saneamiento
+- Gasto corriente (personal, bienes, servicios)
+- Fuente de financiamiento (canon, FONCOMUN, recursos propios)
+:::
+
+::: {.column width="45%"}
+**Preguntas de tesis:**
+
+- ¿La inversión pública en agua potable **reduce** la morbilidad infantil? (SIAF + ENAHO mod. 400)
+- ¿El gasto en infraestructura vial **mejora** el empleo rural? (SIAF + ENAHO mod. 500)
+- ¿El canon minero **reduce** la pobreza local? (SIAF + ENAHO Sumaria)
+
+*Variación exógena:* la fórmula de distribución del canon (basada en producción minera y población) genera variación que no depende de decisiones locales.
+:::
+::::
+
+---
+
+## Ejemplo: SBS + ENAHO {.smaller}
+
+:::: {.columns}
+
+::: {.column width="55%"}
+**¿Qué tiene la SBS?**
+
+La Superintendencia publica datos sobre infraestructura financiera:
+
+- Número de oficinas bancarias, cajeros, agentes por distrito
+- Volumen de créditos y depósitos
+- Tipo de institución (banca múltiple, cajas, financieras)
+:::
+
+::: {.column width="45%"}
+**Preguntas de tesis:**
+
+- ¿La inclusión financiera **reduce** la vulnerabilidad ante shocks? (SBS + ENAHO mod. 500/Sumaria)
+- ¿El cierre de oficinas bancarias **afecta** el acceso a crédito de hogares? (SBS + ENAHO)
+- ¿Los agentes bancarios **cambian** patrones de ahorro? (como nuestro paper del Bloque 3)
+:::
+::::
+
+. . .
+
+**Tip:** La SBS publica datos trimestrales por distrito desde 2010. Eso te da variación temporal granular que se combina bien con ENAHO trimestral.
+
+---
+
+## El merge en la práctica {.smaller}
+
+```{python}
+#| echo: true
+#| eval: false
+import pandas as pd
+
+# 1. Cargar ENAHO (nivel individuo)
+enaho = pd.read_stata("enaho_2024_500.dta")
+
+# 2. Construir ubigeo distrital (6 dígitos)
+enaho["ubigeo"] = (
+    enaho["ccdd"].astype(str).str.zfill(2) +   # departamento
+    enaho["ccpp"].astype(str).str.zfill(2) +   # provincia
+    enaho["ccdi"].astype(str).str.zfill(2)     # distrito
+)
+
+# 3. Cargar dato administrativo (nivel distrito)
+sbs = pd.read_csv("agentes_bancarios_distrito.csv")
+
+# 4. Merge por ubigeo + periodo
+df = enaho.merge(sbs, on=["ubigeo", "anio", "trimestre"], how="left")
+
+# 5. Ahora tienes outcome individual + tratamiento distrital
+# df tiene: ingreso del individuo + número de agentes en su distrito
+```
+
+. . .
+
+**Cuidado:** El ubigeo cambia entre años cuando se crean nuevos distritos. Siempre usar la codificación del año correspondiente o armonizar.
+
+---
+
+## Resumen del Bloque 4
+
+:::: {.columns}
+
+::: {.column width="50%"}
+**La receta:**
+
+1. Define tu pregunta causal
+2. Identifica qué dato admin tiene el **tratamiento**
+3. ENAHO te da el **outcome** a nivel hogar
+4. Merge por ubigeo distrital
+5. Aplica el método del Bloque 2
+:::
+
+::: {.column width="50%"}
+**Ventajas de este enfoque:**
+
+- Todo es **datos públicos** (no necesitas encuestas propias)
+- Combinación da **variación que ningún dato tiene solo**
+- Datos admin cubren **todos** los distritos (no es muestra)
+- Replicable y verificable
+:::
+::::
+
+---
+
+# {background-color="#2c3e50"}
+
+::: {style="color: white; font-size: 2em; text-align: center;"}
+**Bloque 5**
+
+Menú de temas de tesis
+:::
+
+---
+
+## Ideas concretas (1/2) {.smaller}
+
+| # | Tema | Datos | Método | Variación exógena |
+|---|---|---|---|---|
+| 1 | **Efecto de Pensión 65 en pobreza de adultos mayores** | ENAHO Sumaria + Padrón SISFOH | RDD | Puntaje de focalización SISFOH con umbral de elegibilidad |
+| 2 | **Canon minero y pobreza local** | ENAHO Sumaria + SIAF | DiD / IV | Fórmula de distribución del canon (producción × población) |
+| 3 | **Inversión en agua potable y salud infantil** | ENAHO mod. 400 + SIAF saneamiento | DiD | Ejecución de proyectos de agua con fechas de inicio |
+| 4 | **Migración venezolana y empleo informal** | ENAHO mod. 500 (2015-2024) | DiD temporal | Shock migratorio post-2017 con variación geográfica |
+| 5 | **Electrificación rural y trabajo femenino** | ENAHO mod. 100/500 + MEM | DiD | Expansión del FOSE/electrificación rural con fechas |
+
+---
+
+## Ideas concretas (2/2) {.smaller}
+
+| # | Tema | Datos | Método | Variación exógena |
+|---|---|---|---|---|
+| 6 | **El Niño costero 2017 y resiliencia de hogares** | ENAHO panel 2016-2019 + INDECI | DiD | Distritos afectados vs. no afectados (declaratoria de emergencia) |
+| 7 | **Acceso a internet y empleo juvenil** | ENAHO mod. 300/500 + MTC | DiD | Expansión de fibra óptica (RDNFO) con fechas por localidad |
+| 8 | **Descentralización fiscal y bienestar local** | ENAHO Sumaria + SIAF FONCOMUN | IV | Transferencias basadas en fórmula poblacional |
+| 9 | **Programas alimentarios y nutrición** | ENAHO mod. 700 (prog. sociales) + MIDIS | RDD/DiD | Focalización Qali Warma por quintil de pobreza |
+| 10 | **Corrupción percibida y confianza institucional** | ENAHO mod. 700 (gobernabilidad) | Panel FE | Escándalos de corrupción municipal como shock |
+
+. . .
+
+Todos estos temas usan **datos públicos**, tienen una **estrategia de identificación sugerida**, y son viables como tesis de pregrado.
+
+---
+
+## ¿Cómo elegir entre estos temas?
+
+1. **¿Te interesa el tema?** — Vas a vivir con él meses. Tiene que motivarte.
+2. **¿Los datos están disponibles?** — Descarga los datos antes de comprometerte.
+3. **¿La variación exógena es creíble?** — Consulta con tu asesor antes de avanzar.
+4. **¿Hay literatura previa?** — Busca si alguien ya lo hizo. Si sí, ¿puedes mejorar el método o actualizar los datos?
+5. **¿Es factible en el tiempo?** — Una tesis de pregrado no es un paper de AER. Acota bien.
+
+. . .
+
+**La tesis perfecta no existe.** La mejor tesis es la que se termina, con una pregunta clara, datos limpios, y una estrategia de identificación honesta.
+
+---
+
+# {background-color="#2c3e50"}
+
+::: {style="color: white; font-size: 2em; text-align: center;"}
+**Bloque 6**
+
+Cierre práctico
+:::
+
+---
+
+## ¿Dónde descargar los datos? {.smaller}
+
+| Fuente | URL | Formato |
+|---|---|---|
+| **ENAHO microdatos** | [proyectos.inei.gob.pe/microdatos](https://proyectos.inei.gob.pe/microdatos/) | SPSS, Stata, CSV |
+| **SIAF** | [apps5.mineco.gob.pe/transparencia](https://apps5.mineco.gob.pe/transparencia/mensual/) | Web scraping / consulta |
+| **SBS** | [sbs.gob.pe/estadisticas](https://www.sbs.gob.pe/estadisticas-y-publicaciones/estadisticas-) | Excel |
+| **RENAMU** | [proyectos.inei.gob.pe/microdatos](https://proyectos.inei.gob.pe/microdatos/) | Stata, SPSS |
+| **Censo Escolar** | [escale.minedu.gob.pe](https://escale.minedu.gob.pe/) | Excel, descargas |
+| **SENAMHI** | [senamhi.gob.pe/datos](https://www.senamhi.gob.pe/?&p=estaciones) | CSV |
+
+. . .
+
+**Tip:** INEI publica los microdatos ENAHO en formato `.sav` (SPSS) y `.dta` (Stata). En Python, ambos se leen con `pd.read_spss()` o `pd.read_stata()`.
+
+---
+
+## Herramientas en Python {.smaller}
+
+```{python}
+#| echo: true
+#| eval: false
+# Librerías esenciales para trabajar con ENAHO
+import pandas as pd          # Manipulación de datos
+import numpy as np           # Operaciones numéricas
+import statsmodels.api as sm # Regresiones, encuesta compleja
+
+# Para diseño muestral complejo (factores de expansión + clusters)
+from statsmodels.stats.weightstats import DescrStatsW
+
+# Ejemplo: media ponderada del gasto per cápita
+sumaria = pd.read_stata("sumaria-2024.dta")
+stats = DescrStatsW(sumaria["gpcm"], weights=sumaria["factor07"])
+print(f"Gasto per cápita promedio: S/ {stats.mean:.1f}")
+print(f"IC 95%: [{stats.tconfint_mean()[0]:.1f}, {stats.tconfint_mean()[1]:.1f}]")
+```
+
+. . .
+
+```{python}
+#| echo: true
+#| eval: false
+# Para DiD robusto: paquete csdid en Python
+# pip install csdid
+# Alternativa: usar R con reticulate, o directamente el paquete did en R
+```
+
+**Realidad:** Para DiD robusto (Callaway-Sant'Anna), el ecosistema en **R** (`did`) y **Stata** (`csdid`) está más maduro que en Python. Consideren usar R para la estimación y Python para limpieza.
+
+---
+
+## Flujo de trabajo sugerido
+
+```{mermaid}
+%%| fig-width: 10
+flowchart LR
+    A[1. Pregunta<br>de investigación] --> B[2. Identificar<br>datos]
+    B --> C[3. Descargar<br>y limpiar]
+    C --> D[4. Estadística<br>descriptiva]
+    D --> E[5. Estrategia<br>de identificación]
+    E --> F[6. Estimación<br>+ robustez]
+    F --> G[7. Escribir<br>tesis]
+```
+
+. . .
+
+**No empiecen por el paso 3.** Muchos tesistas descargan datos y empiezan a correr regresiones sin tener clara la pregunta ni la estrategia. Eso produce meses de trabajo sin dirección.
+
+---
+
+## Recursos adicionales
+
+**Libros y cursos:**
+
+- Angrist & Pischke — *Mostly Harmless Econometrics* (la biblia de métodos cuasiexperimentales)
+- Cunningham — *Causal Inference: The Mixtape* (gratuito online, con código en R y Stata)
+- Huntington-Klein — *The Effect* (gratuito online, excelente para intuición)
+
+**Papers metodológicos citados:**
+
+- Callaway & Sant'Anna (2021), *Journal of Econometrics*
+- Goodman-Bacon (2021), *Journal of Econometrics*
+- de Chaisemartin & D'Haultfœuille (2020), *American Economic Review*
+
+**Repositorio de esta charla:**
+
+- Slides, código y datos de ejemplo disponibles en GitHub (link al final)
+
+---
+
+## {background-color="#2c3e50"}
+
+::: {style="color: white; font-size: 1.8em; text-align: center;"}
+**Gracias**
+
+Slides y código: [github.com/joseantonioLVL/charla-enaho-pobreza-uni](https://github.com/joseantonioLVL/charla-enaho-pobreza-uni)
+
+Contacto: josé mendoza
+:::
+
+. . .
+
+::: {style="color: white; text-align: center;"}
+¿Preguntas?
+:::

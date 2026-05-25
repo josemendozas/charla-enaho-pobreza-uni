@@ -1,0 +1,10 @@
+/.quarto/
+_site/
+slides/*_files/
+slides/*.html
+datos/*.csv
+datos/*.dta
+__pycache__/
+.DS_Store
+*.pyc
+.ipynb_checkpoints/
